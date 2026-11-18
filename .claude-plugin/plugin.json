@@ -1,13 +1,13 @@
 {
-  "name": "superpowers",
+  "name": "superduperpowers",
   "description": "Core skills library for Claude Code: TDD, debugging, collaboration patterns, and proven techniques",
   "version": "7.0.2",
   "author": {
-    "name": "Jesse Vincent",
-    "email": "jesse@fsck.com"
+    "name": "Timur Yigit",
+    "url": "https://github.com/timyig"
   },
-  "homepage": "https://github.com/obra/superpowers",
-  "repository": "https://github.com/obra/superpowers",
+  "homepage": "https://github.com/timyig/superduperpowers",
+  "repository": "https://github.com/timyig/superduperpowers",
   "license": "MIT",
   "keywords": [
     "skills",
