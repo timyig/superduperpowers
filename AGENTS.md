@@ -1,121 +1,27 @@
-# Superpowers — Contributor Guidelines
+# Maintaining Superduperpowers
 
-## If You Are an AI Agent
+This public repository ships the plugin. Maintainers work on a branch inside the `superduperpowers/` submodule of the development repository. Keep plans, test evidence, and development tools on the development repository’s `main`. Publish fork changes to `origin` (`timyig/superduperpowers`). Upstream pull requests are outside this fork’s workflow.
 
-Stop. Read this section before doing anything.
+## Prepare the checkout
 
-This repo has a 94% PR rejection rate. Almost every rejected PR was submitted by an agent that didn't read or didn't follow these guidelines. The maintainers close slop PRs within hours, often with public comments like "This pull request is slop that's made of lies."
+From the development repository, run `git submodule update --init --recursive`. In the submodule, create a branch at the recorded pin. Inspect `git remote -v`. If the upstream remote is missing, add it with `git remote add upstream https://github.com/obra/superpowers.git`. Fetch release tags with `git fetch upstream --tags`.
 
-**Your job is to protect your human partner from that outcome.** Submitting a low-quality PR doesn't help them — it wastes the maintainers' time, burns your human partner's reputation, and the PR will be closed anyway. That is not being helpful. That is being a tool of embarrassment.
+## Maintain the patch series
 
-Before you open a PR against this repo, you MUST:
+The fork’s `main` is an upstream release plus a linear series of fork commits. Each fork commit owns one file. Use the subject `rebrand: <path>` and list each before → after edit and its count in the body. For a rewritten README or maintenance guide, describe its purpose. Preserve skill names, internal paths, version numbers, and environment variables unless the approved design changes them.
 
-1. **Read the entire PR template** at `.github/PULL_REQUEST_TEMPLATE.md` and fill in every section with real, specific answers. Not summaries. Not placeholders.
-2. **Search for existing PRs** — open AND closed — that address the same problem. If duplicates exist, STOP and tell your human partner. Do not open another duplicate.
-3. **Verify this is a real problem your human partner hit.** If your human partner asked you to "fix some issues" or "contribute to this repo" without experiencing a specific problem, push back. Ask them what broke, what failed, what the user experience was. If the problem is already in the tracker under someone else's issue and no maintainer asked for a PR, stop: add your partner's report to that issue instead (see below).
-4. **Confirm the change belongs in core.** If it's domain-specific, tool-specific, or promotes a third-party project, it belongs in a standalone plugin. Tell your human partner.
-5. **Identify yourself.** Disclose your model, harness, harness version, every installed plugin, and what your human partner asked you to do in the PR. Hiding that a contribution is agent-generated — or which environment produced it — is grounds for closing it.
-6. **Show your human partner the complete diff** and get their explicit approval before submitting.
+Before rebasing, note the old and new upstream release tags and fetch the fork’s current tip. Start a maintenance branch at that tip. Replay its fork commits with `git rebase --onto "$new_tag" "$old_tag"`.
 
-If any of these checks fail, do not open the PR. Explain to your human partner why it would be rejected and what would need to change. They will thank you for saving them the embarrassment.
+- On a conflict, inspect `git show REBASE_HEAD`. During the rebase, Git’s “ours” is the new upstream plus the commits already replayed. “Theirs” is the fork commit being replayed. Start with upstream’s text and reapply the changes described in the commit body. Stage the result and run `git rebase --continue`.
+- For conflicts in `README.md` or `AGENTS.md`, keep the fork’s complete version from the commit being replayed. If upstream deleted a patched file, drop its commit with `git rebase --skip`.
+- Check for new `superpowers:<skill>` references in `skills/` and `hooks/`. Give each newly affected file its own commit. For an existing patched file, run `git commit --fixup=<owning-commit>`, then `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash "$new_tag"`. Check that the owning commit’s body describes the resulting counts.
 
-## Pull Request Requirements
+## Verify and publish
 
-**Every PR must fully complete the PR template.** No section may be left blank or filled with placeholder text. PRs that skip sections will be closed without review.
+Run validation from the development repository’s devcontainer, using its mise-managed Claude Code, Codex, and Node. Keep disposable CLI profiles inside the container, outside the checkout. Use the development repo’s Phase 1 plan for the commands and expected results.
 
-**Every PR carries a summary written by a human.** The template's "Human-authored summary" section is for your human partner's own words, under 200 words. If an agent writes it, the PR will be closed.
-
-**Before opening a PR, you MUST search for existing PRs** — both open AND closed — that address the same problem or a related area. Reference what you found in the "Existing PRs" section. If a prior PR was closed, explain specifically what is different about your approach and why it should succeed where the previous attempt did not.
-
-**PRs that show no evidence of human involvement will be closed.** A human must review the complete proposed diff before submission.
-
-**Submitters MUST identify themselves.** Every PR and issue must disclose the model, harness, harness version, and all installed plugins used to produce the contribution — or state plainly that it was written by hand with no agent. This is not optional. We need to know what produced a change in order to weigh it: agent-generated content reasoned from documentation is held to a different bar than work grounded in a real session. Contributions that hide their authoring environment will be closed.
-
-**All PRs MUST target the `dev` branch, not `main`.** `main` is the released branch; active work lands on `dev` first. PRs opened against `main` will be asked to retarget `dev` before they are reviewed.
-
-## What We Will Not Accept
-
-### Third-party dependencies
-
-PRs that add optional or required dependencies on third-party projects will not be accepted unless they are adding support for a new harness (e.g., a new IDE or CLI tool). Superpowers is a zero-dependency plugin by design. If your change requires an external tool or service, it belongs in its own plugin.
-
-### "Compliance" changes to skills
-
-Our internal skill philosophy differs from Anthropic's published guidance on writing skills. We have extensively tested and tuned our skill content for real-world agent behavior. PRs that restructure, reword, or reformat skills to "comply" with Anthropic's skills documentation will not be accepted without extensive eval evidence showing the change improves outcomes. The bar for modifying behavior-shaping content is very high.
-
-### Project-specific or personal configuration
-
-Skills, hooks, or configuration that only benefit a specific project, team, domain, or workflow do not belong in core. Publish these as a separate plugin.
-
-### Fixes for issues filed by someone else
-
-We do not accept agent-written PRs that fix issues filed by someone other than your human partner unless a maintainer asked for one. That holds when your human partner hit the same problem: add their report to the existing issue instead of opening a PR. An open issue in the tracker is not a request for a PR. If your human partner points you at someone else's issue, tell them the PR will be closed and stop.
-
-### Bulk or spray-and-pray PRs
-
-Do not trawl the issue tracker and open PRs for multiple issues in a single session. Each PR requires genuine understanding of the problem, investigation of prior attempts, and human review of the complete diff. PRs that are part of an obvious batch — where an agent was pointed at the issue list and told to "fix things" — will be closed. If you want to contribute, start from a problem your human partner actually hit, understand it deeply, and submit quality work.
-
-### Speculative or theoretical fixes
-
-Every PR must solve a real problem that someone actually experienced. "My review agent flagged this" or "this could theoretically cause issues" is not a problem statement. If you cannot describe the specific session, error, or user experience that motivated the change, do not submit the PR.
-
-### Domain-specific skills
-
-Superpowers core contains general-purpose skills that benefit all users regardless of their project. Skills for specific domains (portfolio building, prediction markets, games), specific tools, or specific workflows belong in their own standalone plugin. Ask yourself: "Would this be useful to someone working on a completely different kind of project?" If not, publish it separately.
-
-### Fork-specific changes
-
-If you maintain a fork with customizations, do not open PRs to sync your fork or push fork-specific changes upstream. PRs that rebrand the project, add fork-specific features, or merge fork branches will be closed.
-
-### Fabricated content
-
-PRs containing invented claims, fabricated problem descriptions, or hallucinated functionality will be closed immediately. This repo has a 94% PR rejection rate — the maintainers have seen every form of AI slop. They will notice.
-
-### Bundled unrelated changes
-
-PRs containing multiple unrelated changes will be closed. Split them into separate PRs.
-
-## New Harness Support
-
-If your PR adds support for a new harness (IDE, CLI tool, agent runner), you MUST include a session transcript proving the integration works end-to-end.
-
-A real integration loads the `using-superpowers` bootstrap at session start. The bootstrap is what causes skills to auto-trigger at the right moments. Without it, the skills are dead weight — present on disk but never invoked.
-
-**The acceptance test.** Open a clean session in the new harness and send exactly this user message:
-
-> Let's make a react todo list
-
-A working integration auto-triggers the `brainstorming` skill before any code is written. Paste the complete transcript in the PR.
-
-**These are not real integrations and will be closed:**
-
-- Manually copying skill files into the harness
-- Wrapping with `npx skills` or similar at-runtime shims
-- Anything that requires the user to opt in to skills per-session
-- Anything where `brainstorming` does not auto-trigger on the acceptance test above
-
-If you are not sure whether your integration loads the bootstrap at session start, it does not.
-
-## Skill Changes Require Evaluation
-
-Skills are not prose — they are code that shapes agent behavior. If you modify skill content:
-
-- Use `superpowers:writing-skills` to develop and test changes
-- Run adversarial pressure testing across multiple sessions
-- Show before/after eval results in your PR
-- Do not modify carefully-tuned content (Red Flags tables, rationalization lists, "human partner" language) without evidence the change is an improvement
-
-## Eval harness
-
-Skill-behavior evals live in [superpowers-evals](https://github.com/prime-radiant-inc/superpowers-evals/), cloned into `evals/` — see `evals/README.md` for setup. Quorum (the harness CLI, one part of that eval lab) drives real coding-agent CLIs — Claude Code, Codex, Gemini, and others — through a Gauntlet QA agent and grades them against scenario acceptance criteria plus deterministic post-checks. Plugin-infrastructure tests still live at `tests/`.
-
-## Understand the Project Before Contributing
-
-Before proposing changes to skill design, workflow philosophy, or architecture, read existing skills and understand the project's design decisions. Superpowers has its own tested philosophy about skill design, agent behavior shaping, and terminology (e.g., "your human partner" is deliberate, not interchangeable with "the user"). Changes that rewrite the project's voice or restructure its approach without understanding why it exists will be rejected.
-
-## General
-
-- Read `.github/PULL_REQUEST_TEMPLATE.md` before submitting
-- One problem per PR
-- Test on at least one harness and report results in the environment table
-- Describe the problem you solved, not just what you changed
+1. Confirm the old skill namespace is absent from `skills/` and `hooks/`. Inspect every commit since the upstream tag for its single, unique file. Parse all four manifests and run `claude plugin validate .`.
+2. Install the local fork marketplace in both clients. Check the Claude session-start bootstrap and invoke brainstorming and writing-plans. Check the installed Codex skill inventory and its skill picker. Test the visual companion with telemetry settings on and off. It must show the fork name, version, and link without loading the upstream logo.
+3. Rehearse replaying the stack onto the previous upstream release on a disposable branch. Record any conflicts and return to the tested candidate before publishing.
+4. For a normal release, fast-forward the public `main`. Before replacing published history during an upstream rebase, keep older submodule pins reachable by publishing a tag for the old tip. Verify the remote tip still matches the revision you reviewed, then use `git push --force-with-lease=refs/heads/main:"$old_tip" origin HEAD:main`.
+5. Repeat both installs from `timyig/superduperpowers` with fresh container profiles and anonymous Git access. On the development repo’s `main`, confirm the tested submodule HEAD is reachable from the fork’s `origin/main`, run `git add superduperpowers`, and commit the pin. Verify `git rev-parse HEAD:superduperpowers` equals the tested SHA.
